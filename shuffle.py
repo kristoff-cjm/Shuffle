@@ -3,6 +3,10 @@ import hashlib
 import secrets
 
 def expand_key(key: FixedBinary, target_length: int) -> FixedBinary:
+    if key.length == target_length:
+        return key
+    if key.length > target_length:
+        return FixedBinary(key[:target_length], target_length)
     binary_key = ''.join(format(ord(c), '08b') for c in key)  # Convert key to binary
     expanded_key = ""
     hash_input = binary_key
@@ -19,9 +23,7 @@ def encrypt(message, key):
     #convert message into bits
     m = FixedBinary(message.encode("utf-8"))
     salt = secrets.token_bytes(8)
-    print(salt)
-    salt = FixedBinary(salt)
-    print(salt)
+    salt = FixedBinary(salt, 8*8)
     m = salt + m
     
     #expand key or message to match sizes
@@ -52,7 +54,8 @@ def encrypt(message, key):
         extra_bit_count = m.length % 16
         if extra_bit_count > 0:
             hanging_bits = m[-extra_bit_count:]
-            m = FixedBinary(m[:-extra_bit_count])
+            print("MADE HANGING BITS")
+            m = FixedBinary(m[:-extra_bit_count], m.length - extra_bit_count)
         chunked = [m[i:i + chunksize] for i in range(0, m.length, chunksize)]
         chunkedKey = [key[i:i+4] for i in range(0,key.length, 4)]
         for i in range(len(chunkedKey)):
@@ -73,10 +76,9 @@ def encrypt(message, key):
 
 def decrypt(ciphertext, key):
     salt_length = 8 * 8
-    
-    salt = FixedBinary(ciphertext[:salt_length])
-    c = FixedBinary(ciphertext[salt_length:])
-    
+    salt = FixedBinary(ciphertext[:salt_length], salt_length)
+    c = FixedBinary(ciphertext[salt_length:], ciphertext.length-salt_length)
+
     if c.length != key.length:
         key = expand_key(key, c.length)
 
@@ -88,13 +90,13 @@ def decrypt(ciphertext, key):
 
     c = unshuffle(c, key, size)
 
-
+    print("c before: ", c)
     if c.length > 16:
         chunksize = c.length // 16
         extra_bit_count = c.length % 16
         if extra_bit_count > 0:
             hanging_bits = c[-extra_bit_count:]
-            c = FixedBinary(c[:-extra_bit_count])
+            c = FixedBinary(c[:-extra_bit_count], c.length - extra_bit_count)
         chunked = [c[i:i + chunksize] for i in range(0, c.length, chunksize)]
         chunkedKey = [key[i:i + 4] for i in range(0, key.length, 4)]
 
@@ -200,9 +202,9 @@ def unshuffle(c, key, size):
     return c
 
 def main():
-    message = "shhh"
+    message = "shh, don't tell."
     m = FixedBinary(message.encode("utf-8"))
-    key = FixedBinary('0xfa12')
+    key = FixedBinary('0xfa121315')
     print("original m: ", m)
     print("original key: ", key)
 
