@@ -114,7 +114,6 @@ def decrypt(ciphertext, key):
 
         c = unshuffle(c, key, size)
 
-        print("c before: ", c)
         if c.length > 16:
             chunksize = c.length // 16
             extra_bit_count = c.length % 16
@@ -237,29 +236,16 @@ def main():
     message = "shh, don't tell."
     m = FixedBinary(message.encode("utf-8"))
     key = FixedBinary('0xfa121315')
-    print("original m: ", m)
-    print("original key: ", key)
 
     secretMessage = encrypt(message, key)
     decryptedMessage = decrypt(secretMessage, key)
 
     print("---------------------")
     print("original message: ", message)
-    print("secret message (binary): ", secretMessage)
     print("secret message (hex): ", secretMessage.toHex())
-    print("decrypted message (binary): ", decryptedMessage)
     print("decrypted message: ", decryptedMessage.toUTF8())
     print("---------------------")
 
-def shufflesOnly():
-    m = FixedBinary('011000101010111010011001110111011101100110100010010011110101100110110111000100100010101111111010')
-    key = FixedBinary('111110100001001011111010000100101111101000010010111110100001001011111010000100101111101000010010')
-    shuffled = shuffle(m, key, m.length)
-    unshuffled = unshuffle(shuffled, key, m.length)
-    print("original m: ", m)
-    print("shuffled: ", shuffled)
-    print("unshuffled: ", unshuffled)
-
 if __name__ == "__main__":
     main()
-    #shufflesOnly()
+    
